@@ -220,12 +220,12 @@ class Craig_Tco_Model_Checkout extends Mage_Payment_Model_Method_Abstract {
     public function getFormFields() {
         $order_id = $this->getCheckout()->getLastRealOrderId();
         $order    = Mage::getModel('sales/order')->loadByIncrementId($order_id);
-        $amount   = round($order->getGrandTotal(), 2);
+        $amount   = round($order->getBaseGrandTotal(), 2);
         $a = $this->getQuote()->getShippingAddress();
         $b = $this->getQuote()->getBillingAddress();
         $country = $b->getCountry();
-        $currency_code = $order->getOrderCurrencyCode();
-        $shipping = round($order->getShippingAmount(), 2);
+        $currency_code = Mage::app()->getStore()->getBaseCurrencyCode();
+        $shipping = round($order->getBaseShippingAmount(), 2);
         $weight = round($order->getWeight(), 2);
         $ship_method   = $order->getShipping_description();
         $tax = trim(round($order->getTaxAmount(), 2));
@@ -235,55 +235,55 @@ class Craig_Tco_Model_Checkout extends Mage_Payment_Model_Method_Abstract {
         $lineitemData = $this->getLineitemData();
 
         $tcoFields = array();
-        $tcoFields['sid']					= $this->getSid();
+        $tcoFields['sid']                   = $this->getSid();
         $tcoFields['lang']                  = $this->getLanguage();
         $tcoFields['purchase_step']         = 'payment-method';
-        $tcoFields['merchant_order_id']		= $order_id;
-        $tcoFields['email']					= $order->getData('customer_email');
-        $tcoFields['first_name']			= $b->getFirstname();
-        $tcoFields['last_name']				= $b->getLastname();
-        $tcoFields['phone']					= $b->getTelephone();
-        $tcoFields['country']				= $b->getCountry();
-        $tcoFields['street_address']		= $b->getStreet1();
-        $tcoFields['street_address2']		= $b->getStreet2();
-        $tcoFields['city']					= $b->getCity();
+        $tcoFields['merchant_order_id']     = $order_id;
+        $tcoFields['email']                 = $order->getData('customer_email');
+        $tcoFields['first_name']            = $b->getFirstname();
+        $tcoFields['last_name']             = $b->getLastname();
+        $tcoFields['phone']                 = $b->getTelephone();
+        $tcoFields['country']               = $b->getCountry();
+        $tcoFields['street_address']        = $b->getStreet1();
+        $tcoFields['street_address2']       = $b->getStreet2();
+        $tcoFields['city']                  = $b->getCity();
 
         if ($country == 'US' || $country == 'CA') {
             $tcoFields['state']             = $b->getRegion();
         } else {
-            $tcoFields['state']				= 'XX';
+            $tcoFields['state']             = 'XX';
         }
 
-        $tcoFields['zip']					= $b->getPostcode();
+        $tcoFields['zip']                   = $b->getPostcode();
 
         if ($a) {
             $tcoFields['ship_name']             = $a->getFirstname() . ' ' . $a->getLastname();
-            $tcoFields['ship_country']			= $a->getCountry();
-            $tcoFields['ship_street_address']	= $a->getStreet1();
-            $tcoFields['ship_street_address2']	= $a->getStreet2();
-            $tcoFields['ship_city']				= $a->getCity();
-            $tcoFields['ship_state']			= $a->getRegion();
-            $tcoFields['ship_zip']				= $a->getPostcode();
-            $tcoFields['sh_cost']				= $shipping;
-            $tcoFields['sh_weight']				= $weight;
-            $tcoFields['ship_method']			= $ship_method;
+            $tcoFields['ship_country']          = $a->getCountry();
+            $tcoFields['ship_street_address']   = $a->getStreet1();
+            $tcoFields['ship_street_address2']  = $a->getStreet2();
+            $tcoFields['ship_city']             = $a->getCity();
+            $tcoFields['ship_state']            = $a->getRegion();
+            $tcoFields['ship_zip']              = $a->getPostcode();
+            $tcoFields['sh_cost']               = $shipping;
+            $tcoFields['sh_weight']             = $weight;
+            $tcoFields['ship_method']           = $ship_method;
         }
-        $tcoFields['2co_tax']				= $tax;
-        $tcoFields['2co_cart_type']			= 'magento';
+        $tcoFields['2co_tax']               = $tax;
+        $tcoFields['2co_cart_type']         = 'magento';
         $tcoFields['x_Receipt_Link_URL']    = Mage::getUrl('tco/redirect/success', array('_secure' => true));
         $tcoFields['return_url'] = Mage::getUrl('tco/redirect/cart', array('_secure' => true));
-        $tcoFields['demo']					= $this->getDemo();
+        $tcoFields['demo']                  = $this->getDemo();
         $tcoFields['currency_code'] = $currency_code;
 
         //Check Integration mode
         $lineitem_total = $this->checkTotal();
         if ($lineitem_total != $amount) {
-            $tcoFields['id_type']			= '1';
-            $tcoFields['total']				= $amount;
-            $tcoFields['cart_order_id']			= $order_id;
+            $tcoFields['id_type']           = '1';
+            $tcoFields['total']             = $amount;
+            $tcoFields['cart_order_id']         = $order_id;
             $result = $productData + $taxData + $tcoFields;
         } else {
-            $tcoFields['mode']		        	= '2CO';
+            $tcoFields['mode']                  = '2CO';
             $result = $tcoFields + $lineitemData;
         }
 
